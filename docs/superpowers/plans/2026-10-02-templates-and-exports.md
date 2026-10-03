@@ -32,9 +32,9 @@ Interfaces: `api_get_template(templateId): Template`, `api_save_custom_template(
 
 ## Task 2: Exports
 
-Files: focused modules in `frontend/src/lib/meeting-export/`, `frontend/src/components/MeetingDetails/ExportMenu.tsx`, `frontend/src/components/MeetingDetails/SummaryPanel.tsx`, required summary fallback helpers, `frontend/package.json`, `frontend/pnpm-lock.yaml`, export tests.
+Files: focused modules in `frontend/src/lib/meeting-export/`, `frontend/src/components/MeetingDetails/ExportMenu.tsx`, `frontend/src/components/MeetingDetails/SummaryPanel.tsx`, required summary fallback helpers, `frontend/src-tauri/src/lib.rs` and `frontend/src-tauri/tauri.conf.json` for native file plugin initialization/save permissions, `frontend/package.json`, `frontend/pnpm-lock.yaml`, export tests.
 
-Interfaces: `buildMeetingDocument({ title, createdAt, summaryMarkdown, transcripts }): MeetingDocument`, `renderMeetingExport(document, format): Promise<Uint8Array>`, `format` is `markdown | pdf | docx`. Keep model and renderers distinct. `ExportMenu` receives meeting metadata, `getSummaryMarkdown(): Promise<string>`, and transcript availability; summary panel obtains editor markdown then falls back to complete legacy summary conversion. It offers three formats and an include-transcript option. When enabled, fetch every transcript page using the existing Tauri pagination API, reject partial/failed retrieval, and include timestamped text. The selector is disabled during generation/export. Use native save dialog and writeFile; cancellation is silent, errors preserve state, filenames are sanitized and have the proper extension. Load renderers dynamically. Add `docx` and a verified compatible local PDF renderer only in this task.
+Interfaces: `buildMeetingDocument({ title, createdAt, summaryMarkdown, transcripts }): MeetingDocument`, `renderMeetingExport(document, format): Promise<Uint8Array>`, `format` is `markdown | pdf | docx`. Keep model and renderers distinct. `ExportMenu` receives meeting metadata, `getSummaryMarkdown(): Promise<string>`, and transcript availability; summary panel obtains editor markdown then falls back to complete legacy summary conversion. It offers three formats and an include-transcript option. When enabled, fetch every transcript page using the existing Tauri pagination API, reject partial/failed retrieval, and include timestamped text. The selector is disabled during generation/export. The dialog plugin is initialized, but the filesystem plugin is currently missing from the builder: initialize it and add narrow dialog:allow-save permission alongside existing filesystem permissions. Use native save dialog and writeFile; cancellation is silent, errors preserve state, filenames are sanitized and have the proper extension. Load renderers dynamically. Add `docx` and a verified compatible local PDF renderer only in this task.
 
 - [ ] Add content, pagination, renderer file-signature, filename, and write/cancellation tests before implementation.
 - [ ] Implement shared model, complete transcript retrieval, local renderers, native save behavior.
@@ -55,4 +55,5 @@ Interfaces: `buildMeetingDocument({ title, createdAt, summaryMarkdown, transcrip
 - Frontend: 45 Bun tests passed; `pnpm exec tsc --noEmit` passed.
 - `pnpm lint` prompts for ESLint configuration because upstream has no config; no lint result is claimed.
 - Native build: Rust and Visual Studio C++ build tools are unavailable.
+
 
