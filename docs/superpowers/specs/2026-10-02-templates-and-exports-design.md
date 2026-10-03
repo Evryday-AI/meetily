@@ -8,7 +8,7 @@ Keep the Tauri/Rust core, Next.js interface, local SQLite storage, and existing 
 
 Templates contain a display name, description, and ordered sections. Each section has a title, instruction, and paragraph/list/string format. The editor can create templates, duplicate built-ins, edit custom templates, and delete custom templates. Show a structural preview; it does not call an AI model. Persist custom templates in the directory already read by the summary engine. Protect built-ins from accidental overwriting. A successful save refreshes the selector and selects the saved template. Failed writes preserve the editor's contents and display an actionable error. Prevent edits while summary generation is active.
 
-Add four original presets (retrospective, client call, interview, project planning) beside the two existing presets. Use stable IDs so the current summary commands and template cache continue to work.
+Provide six embedded starter presets: standard meeting, daily standup, retrospective, client call, interview, and project planning. Reuse the existing MIT retrospective preset and add original presets for the other missing cases. Preserve additional resource-only presets and safe manually supplied custom templates. Use stable IDs so the current summary commands and template cache continue to work.
 
 Exports contain the current meeting title, date, current summary (including unsaved editor changes), and optionally the complete transcript with recording-relative timestamps. Fetch all transcript pages from the backend rather than exporting only the visible page. Markdown, PDF, and DOCX use one shared document representation. PDF and DOCX generation run locally and load only when needed. Save through the native file dialog and filesystem, with explicit cancellation handling. Preserve paragraphs, headings, lists, and tables where supported; document any formatting limitations. Fail clearly rather than silently exporting a truncated transcript or empty summary.
 
@@ -29,3 +29,4 @@ Use existing Bun tests and TypeScript checks, plus tests covering validation, pe
 ## Deferred work
 
 After this milestone: benchmark local diarization models on representative recordings, add persistent speaker labels and corrections, validate GPU backends on our hardware, and expose meeting services through MCP/CLI/webhooks.
+

@@ -20,13 +20,13 @@
 
 ## Task 1: Templates
 
-Files: `frontend/src-tauri/src/summary/templates/{loader,types,mod,defaults}.rs`, `frontend/src-tauri/src/summary/template_commands.rs`, `frontend/src-tauri/src/lib.rs`, four JSON files in `frontend/src-tauri/templates/`, `frontend/src/lib/summary-templates.ts`, `frontend/src/components/MeetingDetails/TemplateEditor.tsx`, `frontend/src/components/MeetingDetails/{SummaryGeneratorButtonGroup,SummaryPanel}.tsx`, `frontend/src/hooks/meeting-details/useTemplates.ts`, `frontend/src/app/meeting-details/page-content.tsx`, focused template tests.
+Files: `frontend/src-tauri/src/summary/templates/{loader,types,mod,defaults}.rs`, `frontend/src-tauri/src/summary/template_commands.rs`, `frontend/src-tauri/src/lib.rs`, preset JSON files in `frontend/src-tauri/templates/`, `frontend/src/lib/summary-templates.ts`, `frontend/src/components/MeetingDetails/TemplateEditor.tsx`, `frontend/src/components/MeetingDetails/{SummaryGeneratorButtonGroup,SummaryPanel}.tsx`, `frontend/src/hooks/meeting-details/useTemplates.ts`, `frontend/src/app/meeting-details/page-content.tsx`, focused template tests.
 
-Interfaces: `api_get_template(templateId): Template`, `api_save_custom_template(templateId: string | null, templateJson: string): TemplateInfo`, `api_delete_custom_template(templateId): void`. `TemplateInfo` adds `is_custom: bool`. Hook exposes `refreshTemplates(): Promise<void>`. New saves generate `custom_` plus a UUID; updates/deletes accept only safe `custom_` identifiers. Validate at most 64 KiB of JSON and all required trimmed fields before any write. Persist atomically in the existing custom directory with tempfile. Do not let a save overwrite a preset. Add four original presets, six total. Editor supports ordered section add/remove/reorder, duplicate, edit, delete, structural preview, busy/error states; successful saves refresh and select the new ID.
+Interfaces: `api_get_template(templateId): Template`, `api_save_custom_template(templateId: string | null, templateJson: string): TemplateInfo`, `api_delete_custom_template(templateId): void`. `TemplateInfo` adds `is_custom: bool`. Hook exposes `refreshTemplates(): Promise<void>`. New saves generate `custom_` plus a UUID; updates/deletes accept only safe `custom_` identifiers. Validate at most 64 KiB of JSON and all required trimmed fields before any write. Persist atomically in the existing custom directory with tempfile. Do not let a save overwrite a preset. Provide six embedded starter presets by retaining standard/daily/retrospective and adding client_call/interview/project_planning. Preserve extra bundled and safe manually supplied templates. Editor supports ordered section add/remove/reorder, duplicate, edit, delete, structural preview, busy/error states; successful saves refresh and select the new ID.
 
 - [ ] Add meaningful validation and persistence tests before implementation.
 - [ ] Implement local persistence and register commands.
-- [ ] Add original presets and frontend editor, connect refresh/selection.
+- [ ] Add missing original presets and frontend editor, connect refresh/selection.
 - [ ] Run focused Bun tests and TypeScript. Run Rust tests if the native environment exists; otherwise record unverified compilation.
 - [ ] Commit only task files and submit a task review package.
 
@@ -55,3 +55,4 @@ Interfaces: `buildMeetingDocument({ title, createdAt, summaryMarkdown, transcrip
 - Frontend: 45 Bun tests passed; `pnpm exec tsc --noEmit` passed.
 - `pnpm lint` prompts for ESLint configuration because upstream has no config; no lint result is claimed.
 - Native build: Rust and Visual Studio C++ build tools are unavailable.
+
