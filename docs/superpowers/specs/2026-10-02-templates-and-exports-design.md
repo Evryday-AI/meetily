@@ -10,7 +10,7 @@ Templates contain a display name, description, and ordered sections. Each sectio
 
 Provide six embedded starter presets: standard meeting, daily standup, retrospective, client call, interview, and project planning. Reuse the existing MIT retrospective preset and add original presets for the other missing cases. Preserve additional resource-only presets and safe manually supplied custom templates. Use stable IDs so the current summary commands and template cache continue to work.
 
-Exports contain the current meeting title, date, current summary (including unsaved editor changes), and optionally the complete transcript with recording-relative timestamps. Fetch all transcript pages from the backend rather than exporting only the visible page. Markdown, PDF, and DOCX use one shared document representation. PDF and DOCX generation run locally and load only when needed. Save through the native file dialog and filesystem, with explicit cancellation handling. Preserve paragraphs, headings, lists, and tables where supported; document any formatting limitations. Fail clearly rather than silently exporting a truncated transcript or empty summary.
+Exports contain the current meeting title, date, current summary (including unsaved editor changes), and optionally the complete transcript with recording-relative timestamps. Fetch all transcript pages from the backend rather than exporting only the visible page. Markdown, PDF, and DOCX use one shared document representation. PDF and DOCX generation run locally and load only when needed. Save through the native file dialog and filesystem, with explicit cancellation handling. Preserve paragraphs, headings, lists, and tables where supported; document any formatting limitations. Allow transcript-only export when a summary has not been generated. Fail clearly rather than silently exporting a truncated transcript or an empty document.
 
 ## Verification
 
@@ -29,4 +29,5 @@ Use existing Bun tests and TypeScript checks, plus tests covering validation, pe
 ## Deferred work
 
 After this milestone: benchmark local diarization models on representative recordings, add persistent speaker labels and corrections, validate GPU backends on our hardware, and expose meeting services through MCP/CLI/webhooks.
+
 
