@@ -47,6 +47,9 @@ fn require_regular_file(path: &Path) -> Result<(), String> {
 
 fn save_custom_template_in(dir: &Path, id: Option<&str>, json: &str) -> Result<(String, Template), String> {
     // Validate everything before creating a directory or touching the previous file.
+    if json.len() > MAX_TEMPLATE_BYTES {
+        return Err("Template exceeds 64 KiB. Shorten the text before saving.".into());
+    }
     let template = validate_and_parse_template(json)?;
     if let Some(id) = id { require_custom_id(id)?; }
     let serialized = serde_json::to_vec(&template).map_err(|e| e.to_string())?;
@@ -138,6 +141,10 @@ fn load_bundled_template(template_id: &str) -> Option<String> {
 /// The template JSON content if found, None otherwise
 fn load_custom_template(template_id: &str) -> Option<String> {
     let custom_dir = get_custom_templates_dir()?;
+    load_custom_template_from(&custom_dir, template_id)
+}
+
+fn load_custom_template_from(custom_dir: &Path, template_id: &str) -> Option<String> {
     let template_path = custom_dir.join(format!("{}.json", template_id));
 
     debug!("Checking for custom template at: {:?}", template_path);
@@ -201,9 +208,6 @@ pub fn get_template(template_id: &str) -> Result<Template, String> {
 /// # Returns
 /// Parsed and validated Template struct
 pub fn validate_and_parse_template(json_content: &str) -> Result<Template, String> {
-    if json_content.len() > MAX_TEMPLATE_BYTES {
-        return Err("Template exceeds 64 KiB. Shorten the text before saving.".into());
-    }
     let mut template: Template = serde_json::from_str(json_content)
         .map_err(|e| format!("Failed to parse template JSON: {}", e))?;
 
@@ -313,14 +317,53 @@ mod tests {
     }
 
     #[test]
-    fn rejects_blank_fields_and_oversized_json() {
+    fn rejects_blank_fields_but_reads_oversized_json() {
         for field in ["name", "description", "title", "instruction", "format"] {
             let mut value: serde_json::Value = serde_json::from_str(&draft()).unwrap();
             if field == "name" || field == "description" { value[field] = " \n ".into(); }
             else { value["sections"][0][field] = " \n ".into(); }
             assert!(validate_and_parse_template(&value.to_string()).is_err(), "{}", field);
         }
-        assert!(validate_and_parse_template(&format!("{}{}", draft(), " ".repeat(65536))).is_err());
+        let oversized = draft().replace("Outcomes", &"x".repeat(65_536));
+        assert!(oversized.len() > MAX_TEMPLATE_BYTES);
+        assert!(validate_and_parse_template(&oversized).is_ok());
+    }
+
+    #[test]
+    fn oversized_save_is_rejected_before_filesystem_mutation() {
+        let dir = tempfile::tempdir().unwrap();
+        let oversized = draft().replace("Outcomes", &"x".repeat(65_536));
+        assert!(save_custom_template_in(dir.path(), None, &oversized).is_err());
+        assert_eq!(std::fs::read_dir(dir.path()).unwrap().count(), 0);
+
+        let absent = dir.path().join("not-created");
+        assert!(save_custom_template_in(&absent, None, &oversized).is_err());
+        assert!(!absent.exists());
+    }
+
+    #[test]
+    fn oversized_bundled_resource_remains_discoverable_and_loadable() {
+        let dir = tempfile::tempdir().unwrap();
+        let json = draft().replace("Outcomes", &"x".repeat(65_536));
+        std::fs::write(dir.path().join("large_resource.json"), &json).unwrap();
+
+        let previous = BUNDLED_TEMPLATES_DIR.read().unwrap().clone();
+        set_bundled_templates_dir(dir.path().to_path_buf());
+        assert!(list_template_ids().iter().any(|id| id == "large_resource"));
+        assert!(get_template("large_resource").is_ok());
+        if let Ok(mut bundled_dir) = BUNDLED_TEMPLATES_DIR.write() {
+            *bundled_dir = previous;
+        }
+    }
+
+    #[test]
+    fn oversized_legacy_custom_template_remains_readable() {
+        let dir = tempfile::tempdir().unwrap();
+        let json = draft().replace("Outcomes", &"x".repeat(65_536));
+        std::fs::write(dir.path().join("legacy_notes.json"), &json).unwrap();
+
+        let loaded = load_custom_template_from(dir.path(), "legacy_notes").unwrap();
+        assert!(validate_and_parse_template(&loaded).is_ok());
     }
 
     #[test]
