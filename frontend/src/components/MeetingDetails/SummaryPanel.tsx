@@ -21,6 +21,7 @@ import {
   SummaryLanguageStorage,
 } from '@/lib/summary-language-preferences';
 import { hasVisibleSummaryContent } from '@/lib/summary-content';
+import type { TemplateInfo } from '@/lib/summary-templates';
 
 interface SummaryPanelProps {
   meeting: {
@@ -49,9 +50,12 @@ interface SummaryPanelProps {
   summaryError: string | null;
   onRegenerateSummary: () => Promise<void>;
   getSummaryStatusMessage: (status: 'idle' | 'processing' | 'summarizing' | 'regenerating' | 'completed' | 'error') => string;
-  availableTemplates: Array<{ id: string, name: string, description: string }>;
+  availableTemplates: TemplateInfo[];
   selectedTemplate: string;
   onTemplateSelect: (templateId: string, templateName: string) => void;
+  refreshTemplates: () => Promise<void>;
+  templatesError?: string | null;
+  isTemplatesLoading?: boolean;
   isModelConfigLoading?: boolean;
   onOpenModelSettings?: (openFn: () => void) => void;
 }
@@ -82,6 +86,9 @@ export function SummaryPanel({
   availableTemplates,
   selectedTemplate,
   onTemplateSelect,
+  refreshTemplates,
+  templatesError,
+  isTemplatesLoading,
   isModelConfigLoading = false,
   onOpenModelSettings,
 }: SummaryPanelProps) {
@@ -258,6 +265,9 @@ export function SummaryPanel({
               availableTemplates={availableTemplates}
               selectedTemplate={selectedTemplate}
               onTemplateSelect={onTemplateSelect}
+              refreshTemplates={refreshTemplates}
+              templatesError={templatesError}
+              isTemplatesLoading={isTemplatesLoading}
               hasTranscripts={transcripts.length > 0}
               hasSummary={hasSummary}
               isModelConfigLoading={isModelConfigLoading}

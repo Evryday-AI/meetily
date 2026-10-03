@@ -1,0 +1,10 @@
+{
+  "name": "Interview",
+  "description": "Organize interview questions, responses, evidence, and unanswered topics.",
+  "sections": [
+    { "title": "Interview Context", "instruction": "Briefly describe the interview's purpose, participants, and topics using only information in the transcript.", "format": "paragraph" },
+    { "title": "Questions and Responses", "instruction": "Group the main questions with the interviewee's responses. Preserve their meaning and distinguish direct statements from interviewer interpretations.", "format": "list" },
+    { "title": "Examples and Evidence", "instruction": "List concrete examples, experiences, or supporting facts mentioned by the interviewee. Do not infer personal traits or unsupported conclusions.", "format": "list" },
+    { "title": "Open Topics", "instruction": "List unanswered questions, areas needing clarification, and any agreed follow-up actions with owners when stated.", "format": "list" }
+  ]
+}

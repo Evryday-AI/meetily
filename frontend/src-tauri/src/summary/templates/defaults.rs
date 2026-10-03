@@ -9,6 +9,11 @@ pub const DAILY_STANDUP: &str = include_str!("../../../templates/daily_standup.j
 /// Standard meeting notes template
 pub const STANDARD_MEETING: &str = include_str!("../../../templates/standard_meeting.json");
 
+pub const RETROSPECTIVE: &str = include_str!("../../../templates/retrospective.json");
+pub const CLIENT_CALL: &str = include_str!("../../../templates/client_call.json");
+pub const INTERVIEW: &str = include_str!("../../../templates/interview.json");
+pub const PROJECT_PLANNING: &str = include_str!("../../../templates/project_planning.json");
+
 /// Registry of all built-in templates
 ///
 /// Maps template identifiers to their embedded JSON content
@@ -16,6 +21,10 @@ pub fn get_builtin_templates() -> Vec<(&'static str, &'static str)> {
     vec![
         ("daily_standup", DAILY_STANDUP),
         ("standard_meeting", STANDARD_MEETING),
+        ("retrospective", RETROSPECTIVE),
+        ("client_call", CLIENT_CALL),
+        ("interview", INTERVIEW),
+        ("project_planning", PROJECT_PLANNING),
     ]
 }
 
@@ -27,16 +36,12 @@ pub fn get_builtin_templates() -> Vec<(&'static str, &'static str)> {
 /// # Returns
 /// The template JSON content if found, None otherwise
 pub fn get_builtin_template(id: &str) -> Option<&'static str> {
-    match id {
-        "daily_standup" => Some(DAILY_STANDUP),
-        "standard_meeting" => Some(STANDARD_MEETING),
-        _ => None,
-    }
+    get_builtin_templates().into_iter().find(|(template_id, _)| *template_id == id).map(|(_, content)| content)
 }
 
 /// List all built-in template identifiers
 pub fn list_builtin_template_ids() -> Vec<&'static str> {
-    vec!["daily_standup", "standard_meeting"]
+    get_builtin_templates().into_iter().map(|(id, _)| id).collect()
 }
 
 #[cfg(test)]
@@ -45,6 +50,7 @@ mod tests {
 
     #[test]
     fn test_builtin_templates_valid_json() {
+        assert_eq!(get_builtin_templates().len(), 6);
         for (id, content) in get_builtin_templates() {
             let result = serde_json::from_str::<serde_json::Value>(content);
             assert!(

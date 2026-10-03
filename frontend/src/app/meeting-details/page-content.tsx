@@ -247,6 +247,9 @@ export default function PageContent({
               availableTemplates={templates.availableTemplates}
               selectedTemplate={templates.selectedTemplate}
               onTemplateSelect={templates.handleTemplateSelection}
+              refreshTemplates={templates.refreshTemplates}
+              templatesError={templates.templatesError}
+              isTemplatesLoading={templates.isTemplatesLoading}
               isModelConfigLoading={isModelConfigLoading}
               onOpenModelSettings={handleRegisterModalOpen}
             />

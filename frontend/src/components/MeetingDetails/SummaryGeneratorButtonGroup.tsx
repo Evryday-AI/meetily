@@ -6,6 +6,7 @@ import {
   DialogContent,
   DialogTrigger,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog"
 import { VisuallyHidden } from "@/components/ui/visually-hidden"
 import { Button } from '@/components/ui/button';
@@ -19,6 +20,8 @@ import {
 import { Sparkles, Settings, Loader2, FileText, Check, Square } from 'lucide-react';
 import Analytics from '@/lib/analytics';
 import { useState, useEffect, ReactNode } from 'react';
+import { TemplateEditor } from './TemplateEditor';
+import type { TemplateInfo } from '@/lib/summary-templates';
 
 interface SummaryGeneratorButtonGroupProps {
   languageSlot?: ReactNode;
@@ -29,9 +32,12 @@ interface SummaryGeneratorButtonGroupProps {
   onStopGeneration: () => void;
   customPrompt: string;
   summaryStatus: 'idle' | 'processing' | 'summarizing' | 'regenerating' | 'completed' | 'error';
-  availableTemplates: Array<{ id: string, name: string, description: string }>;
+  availableTemplates: TemplateInfo[];
   selectedTemplate: string;
   onTemplateSelect: (templateId: string, templateName: string) => void;
+  refreshTemplates: () => Promise<void>;
+  templatesError?: string | null;
+  isTemplatesLoading?: boolean;
   hasTranscripts?: boolean;
   hasSummary?: boolean;
   isModelConfigLoading?: boolean;
@@ -49,6 +55,9 @@ export function SummaryGeneratorButtonGroup({
   availableTemplates,
   selectedTemplate,
   onTemplateSelect,
+  refreshTemplates,
+  templatesError,
+  isTemplatesLoading = false,
   hasTranscripts = true,
   hasSummary = false,
   isModelConfigLoading = false,
@@ -56,6 +65,8 @@ export function SummaryGeneratorButtonGroup({
   languageSlot
 }: SummaryGeneratorButtonGroupProps) {
   const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
+  const [templateEditorOpen, setTemplateEditorOpen] = useState(false);
+  const [templateBusy, setTemplateBusy] = useState(false);
 
   // Expose the function to open the modal via callback registration
   useEffect(() => {
@@ -74,16 +85,12 @@ export function SummaryGeneratorButtonGroup({
     }
   }, [onOpenModelSettings]);
 
-  if (!hasTranscripts) {
-    return null;
-  }
-
   const isGenerating = summaryStatus === 'processing' || summaryStatus === 'summarizing' || summaryStatus === 'regenerating';
 
   return (
     <ButtonGroup>
       {/* Generate Summary or Stop button */}
-      {isGenerating ? (
+      {hasTranscripts && (isGenerating ? (
         <Button
           variant="outline"
           size="sm"
@@ -125,7 +132,7 @@ export function SummaryGeneratorButtonGroup({
             </>
           )}
         </Button>
-      )}
+      ))}
 
       {languageSlot}
 
@@ -161,13 +168,14 @@ export function SummaryGeneratorButtonGroup({
       </Dialog>
 
       {/* Template selector dropdown */}
-      {availableTemplates.length > 0 && (
+      {(
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
               variant="outline"
               size="sm"
               title="Select summary template"
+              disabled={isGenerating || isTemplatesLoading}
             >
               <FileText />
               <span className="hidden @[40rem]:inline">Template</span>
@@ -177,6 +185,7 @@ export function SummaryGeneratorButtonGroup({
             {availableTemplates.map((template) => (
               <DropdownMenuItem
                 key={template.id}
+                disabled={isGenerating}
                 onClick={() => onTemplateSelect(template.id, template.name)}
                 title={template.description}
                 className="flex items-center justify-between gap-2"
@@ -187,10 +196,21 @@ export function SummaryGeneratorButtonGroup({
                 )}
               </DropdownMenuItem>
             ))}
-
+            {templatesError && <div role="alert" className="max-w-72 p-2 text-sm text-red-700">Could not load templates: {templatesError}</div>}
+            {templatesError && <DropdownMenuItem onClick={() => { void refreshTemplates().catch(() => {}); }}>Retry loading templates</DropdownMenuItem>}
+            <DropdownMenuItem disabled={isGenerating} onClick={() => setTemplateEditorOpen(true)}>Manage templates…</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       )}
+      <Dialog open={templateEditorOpen} onOpenChange={open => { if (!templateBusy) setTemplateEditorOpen(open); }}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" onEscapeKeyDown={event => { if (templateBusy) event.preventDefault(); }} onInteractOutside={event => event.preventDefault()}>
+          <DialogTitle>Summary templates</DialogTitle>
+          <DialogDescription>Create a local template, or duplicate a preset and customize its sections.</DialogDescription>
+          <TemplateEditor availableTemplates={availableTemplates} selectedTemplate={selectedTemplate}
+            disabled={isGenerating} refreshTemplates={refreshTemplates} onTemplateSelect={onTemplateSelect}
+            onBusyChange={setTemplateBusy} onClose={() => { setTemplateEditorOpen(false); setTemplateBusy(false); }} />
+        </DialogContent>
+      </Dialog>
     </ButtonGroup>
   );
 }

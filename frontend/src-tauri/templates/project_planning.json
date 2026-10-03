@@ -1,0 +1,10 @@
+{
+  "name": "Project Planning",
+  "description": "Turn a planning discussion into scope, milestones, dependencies, and next actions.",
+  "sections": [
+    { "title": "Objective and Scope", "instruction": "Summarize the intended outcome, success criteria, included work, and explicit exclusions. Mark unresolved scope questions clearly.", "format": "paragraph" },
+    { "title": "Milestones", "instruction": "List agreed milestones and deliverables in the discussed order, with owners and target dates only when stated.", "format": "list" },
+    { "title": "Dependencies and Risks", "instruction": "List dependencies, resource constraints, risks, and proposed mitigations. Distinguish accepted plans from suggestions.", "format": "list" },
+    { "title": "Decisions and Next Actions", "instruction": "List decisions made and immediate next actions. Include responsible people, deadlines, and items awaiting a decision when mentioned.", "format": "list" }
+  ]
+}

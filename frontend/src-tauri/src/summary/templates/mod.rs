@@ -8,7 +8,7 @@
 //!
 //! - **Built-in templates**: JSON files in `frontend/src-tauri/templates/` embedded at compile time
 //! - **Custom templates**: JSON files in platform-specific app data directory
-//! - **Fallback strategy**: Custom templates override built-in templates with the same ID
+//! - **Preset protection**: User files cannot override built-in or bundled presets
 //!
 //! # Usage
 //!
@@ -45,6 +45,7 @@ mod types;
 pub use loader::{
     get_template, list_template_ids, list_templates, set_bundled_templates_dir,
     validate_and_parse_template,
+    save_custom_template, delete_custom_template, is_custom_template,
 };
 pub use types::{Template, TemplateSection};
 
