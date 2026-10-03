@@ -24,11 +24,11 @@ Files: `frontend/src-tauri/src/summary/templates/{loader,types,mod,defaults}.rs`
 
 Interfaces: `api_get_template(templateId): Template`, `api_save_custom_template(templateId: string | null, templateJson: string): TemplateInfo`, `api_delete_custom_template(templateId): void`. `TemplateInfo` adds `is_custom: bool`. Hook exposes `refreshTemplates(): Promise<void>`. New saves generate `custom_` plus a UUID; updates/deletes accept only safe `custom_` identifiers. Validate at most 64 KiB of JSON and all required trimmed fields before any write. Persist atomically in the existing custom directory with tempfile. Do not let a save overwrite a preset. Provide six embedded starter presets by retaining standard/daily/retrospective and adding client_call/interview/project_planning. Preserve extra bundled and safe manually supplied templates. Editor supports ordered section add/remove/reorder, duplicate, edit, delete, structural preview, busy/error states; successful saves refresh and select the new ID.
 
-- [ ] Add meaningful validation and persistence tests before implementation.
-- [ ] Implement local persistence and register commands.
-- [ ] Add missing original presets and frontend editor, connect refresh/selection.
-- [ ] Run focused Bun tests and TypeScript. Run Rust tests if the native environment exists; otherwise record unverified compilation.
-- [ ] Commit only task files and submit a task review package.
+- [x] Add meaningful validation and persistence tests before implementation.
+- [x] Implement local persistence and register commands.
+- [x] Add missing original presets and frontend editor, connect refresh/selection.
+- [x] Run focused Bun tests and TypeScript. Run Rust tests if the native environment exists; otherwise record unverified compilation.
+- [x] Commit only task files and submit a task review package.
 
 ## Task 2: Exports
 
@@ -36,17 +36,17 @@ Files: focused modules in `frontend/src/lib/meeting-export/`, `frontend/src/comp
 
 Interfaces: `buildMeetingDocument({ title, createdAt, summaryMarkdown, transcripts }): MeetingDocument`, `renderMeetingExport(document, format): Promise<Uint8Array>`, `format` is `markdown | pdf | docx`. Keep model and renderers distinct. `ExportMenu` receives meeting metadata, `getSummaryMarkdown(): Promise<string>`, and transcript availability; summary panel obtains editor markdown then falls back to complete legacy summary conversion. It offers three formats and an include-transcript option. Enable export if a summary or transcripts exist; when there is no summary, allow transcript-only export and include the transcript by default. Reject an empty document. When enabled, fetch every transcript page using the existing Tauri pagination API, reject partial/failed retrieval, and include timestamped text. The selector is disabled during generation/export. The dialog plugin is initialized, but the filesystem plugin is currently missing from the builder: initialize it and add narrow dialog:allow-save permission alongside existing filesystem permissions. Use native save dialog and writeFile; cancellation is silent, errors preserve state, filenames are sanitized and have the proper extension. Load renderers dynamically. Add `docx` and a verified compatible local PDF renderer only in this task.
 
-- [ ] Add content, pagination, renderer file-signature, filename, and write/cancellation tests before implementation.
-- [ ] Implement shared model, complete transcript retrieval, local renderers, native save behavior.
-- [ ] Integrate ExportMenu with current editor content and summary availability.
-- [ ] Run focused tests, all existing tests, TypeScript, and production build.
-- [ ] Commit task files and submit a task review package.
+- [x] Add content, pagination, renderer file-signature, filename, and write/cancellation tests before implementation.
+- [x] Implement shared model, complete transcript retrieval, local renderers, native save behavior.
+- [x] Integrate ExportMenu with current editor content and summary availability.
+- [x] Run focused tests, all existing tests, TypeScript, and production build.
+- [x] Commit task files and submit a task review package.
 
 ## Task 3: Review and delivery
 
-- [ ] Resolve task review findings and run a final whole-branch review.
-- [ ] Update this plan with actual validation and remaining limitations.
-- [ ] Retain the feature branch and checkout for iteration; share fork and reviewable changes.
+- [x] Resolve task review findings and run a final whole-branch review.
+- [x] Update this plan with actual validation and remaining limitations.
+- [x] Retain the feature branch and checkout for iteration; share fork and reviewable changes.
 
 ## Kickoff baseline
 
@@ -55,6 +55,14 @@ Interfaces: `buildMeetingDocument({ title, createdAt, summaryMarkdown, transcrip
 - Frontend: 45 Bun tests passed; `pnpm exec tsc --noEmit` passed.
 - `pnpm lint` prompts for ESLint configuration because upstream has no config; no lint result is claimed.
 - Native build: Rust and Visual Studio C++ build tools are unavailable.
+
+## Implementation validation
+
+Tasks 1 and 2 passed separate reviews after correcting the legacy template read limit, saved-editor export state, and empty formatted content checks. The final frontend suite passes 100 tests with 370 assertions. TypeScript and the Next.js production build pass, including all 11 static pages. Rust persistence regressions were added but could not run without the native toolchain; native compilation, Windows atomic persistence, and actual save-dialog/write smoke testing remain unverified.
+
+The final integration review also corrected section formats being omitted from generation instructions. Paragraph, list, and short-text choices now affect the prompt and cache fingerprint while preserving item-format hints. Four focused Rust regressions were added, but remain unexecuted without Cargo. The focused re-review passed with no remaining Important or Critical findings.
+
+Independent sample inspection confirmed a 15-page PDF with complete transcript content and readable first, continued-table, and last pages. DOCX ZIP/XML inspection confirmed headings, table, and complete content. PDF uses local Helvetica and explicitly rejects unsupported characters; DOCX and Markdown preserve Unicode. Formatting limits are documented in `frontend/src/lib/meeting-export/README.md`.
 
 
 
