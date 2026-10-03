@@ -25,6 +25,21 @@ test('transcript-only documents work and metadata alone cannot be exported', () 
   expect(() => buildMeetingDocument({ ...input, summaryMarkdown: '---', transcripts: [] })).toThrow('empty');
 });
 
+test.each(['#', '##   ', '- ', '1. ', '-\n  - ', '-\n  -\n    - ', '| | |\n| --- | --- |\n| | |'])('empty formatted summary is rejected without a transcript: %j', summaryMarkdown => {
+  expect(() => buildMeetingDocument({ ...input, summaryMarkdown, transcripts: [] })).toThrow('Cannot export an empty meeting');
+  expect(() => buildMeetingDocument({ ...input, summaryMarkdown, transcripts: [{ ...segment('blank'), text: ' \n ' }] })).toThrow('Cannot export an empty meeting');
+});
+
+test.each(['#', '-\n  - ', '| | |\n| --- | --- |\n| | |'])('empty formatting still permits a transcript-only document: %j', summaryMarkdown => {
+  const model = buildMeetingDocument({ ...input, summaryMarkdown });
+  expect(JSON.stringify(model)).toContain('Segment first');
+  expect(model.blocks.some(block => block.type === 'heading' && block.text === 'Summary')).toBe(false);
+});
+
+test.each(['## Visible heading', '-\n  -\n    - Visible nested item', '| | |\n| --- | --- |\n| | Visible cell |'])('visible summary text remains valid at every block depth: %j', summaryMarkdown => {
+  expect(JSON.stringify(buildMeetingDocument({ ...input, summaryMarkdown, transcripts: [] }))).toContain('Visible');
+});
+
 test('meeting date preserves the local calendar day across UTC midnight', () => {
   expect(formatMeetingDate('2026-10-03T02:00:00Z', 'America/Chicago')).toBe('2026-10-02');
   expect(formatMeetingDate('2026-10-02', 'America/Chicago')).toBe('2026-10-02');

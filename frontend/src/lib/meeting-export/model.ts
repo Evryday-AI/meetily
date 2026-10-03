@@ -35,6 +35,12 @@ function convertNodes(nodes: MarkdownNode[]): DocumentBlock[] {
   });
 }
 
+function hasVisibleText(block: DocumentBlock): boolean {
+  if (block.type === 'list') return block.items.some(item => item.some(hasVisibleText));
+  if (block.type === 'table') return block.rows.some(row => row.some(cell => !!cell.trim()));
+  return !!block.text.trim();
+}
+
 export function formatTranscriptTime(transcript: Transcript): string {
   const seconds = transcript.audio_start_time ?? transcript.chunk_start_time;
   if (seconds === undefined || !Number.isFinite(seconds) || seconds < 0) return 'time unavailable';
@@ -55,11 +61,12 @@ export function buildMeetingDocument({ title, createdAt, summaryMarkdown, transc
 }): MeetingDocument {
   const ast = unified().use(remarkParse).use(remarkGfm).parse(summaryMarkdown) as unknown as MarkdownNode;
   const summary = convertNodes(ast.children || []);
+  const hasSummary = summary.some(hasVisibleText);
   const transcript = transcripts.filter(t => t.text.trim()).map((t): DocumentBlock => ({ type: 'paragraph', text: `[${formatTranscriptTime(t)}] ${t.text}` }));
-  if (!summary.length && !transcript.length) throw new Error('Cannot export an empty meeting. Add a summary or transcript first.');
+  if (!hasSummary && !transcript.length) throw new Error('Cannot export an empty meeting. Add a summary or transcript first.');
   const dateText = formatMeetingDate(createdAt);
   const blocks: DocumentBlock[] = [{ type: 'heading', level: 1, text: title.trim() || 'Untitled meeting' }, { type: 'paragraph', text: `Date: ${dateText}` }];
-  if (summary.length) blocks.push({ type: 'heading', level: 2, text: 'Summary' }, ...summary);
+  if (hasSummary) blocks.push({ type: 'heading', level: 2, text: 'Summary' }, ...summary);
   if (transcript.length) blocks.push({ type: 'heading', level: 2, text: 'Transcript' }, ...transcript);
   return { title: title.trim() || 'Untitled meeting', blocks };
 }
