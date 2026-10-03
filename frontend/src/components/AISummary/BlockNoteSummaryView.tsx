@@ -8,6 +8,7 @@ import { Block } from '@blocknote/core';
 import { useCreateBlockNote } from '@blocknote/react';
 import { BlockNoteView } from '@blocknote/shadcn';
 import { blocksToMarkdownSafely } from '@/lib/blocknote-markdown';
+import { getCurrentEditorMarkdown } from '@/lib/meeting-export/summary';
 import "@blocknote/shadcn/style.css";
 
 // Dynamically import BlockNote Editor to avoid SSR issues
@@ -31,6 +32,7 @@ interface BlockNoteSummaryViewProps {
 export interface BlockNoteSummaryViewRef {
   saveSummary: () => Promise<void>;
   getMarkdown: () => Promise<string>;
+  getMarkdownForExport: () => Promise<string>;
   isDirty: boolean;
 }
 
@@ -167,6 +169,13 @@ export const BlockNoteSummaryView = forwardRef<BlockNoteSummaryViewRef, BlockNot
   // Expose methods to parent via ref
   useImperativeHandle(ref, () => ({
     saveSummary: handleSave,
+    getMarkdownForExport: async () => {
+      if (format === 'legacy') return '';
+      const blocks = format === 'markdown'
+        ? editor.document
+        : isDirty ? currentBlocks : (data?.summary_json as unknown as Block[]) || [];
+      return getCurrentEditorMarkdown(editor, blocks, isContentLoaded.current);
+    },
     getMarkdown: async () => {
       try {
         console.log('🔍 getMarkdown called, format:', format);

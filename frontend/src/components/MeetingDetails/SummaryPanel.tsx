@@ -6,6 +6,8 @@ import { EmptyStateSummary } from '@/components/EmptyStateSummary';
 import { ModelConfig } from '@/components/ModelSettingsModal';
 import { SummaryGeneratorButtonGroup } from './SummaryGeneratorButtonGroup';
 import { SummaryUpdaterButtonGroup } from './SummaryUpdaterButtonGroup';
+import { ExportMenu } from './ExportMenu';
+import { getExportSummaryMarkdown } from '@/lib/meeting-export/summary';
 import Analytics from '@/lib/analytics';
 import { useEffect, useRef, useState, RefObject } from 'react';
 import { toast } from 'sonner';
@@ -286,6 +288,17 @@ export function SummaryPanel({
               />
             </div>
           )}
+          <ExportMenu
+            key={meeting.id}
+            meeting={{ ...meeting, title: meetingTitle }}
+            hasSummary={hasSummary}
+            hasTranscripts={transcripts.length > 0}
+            disabled={isSummaryLoading}
+            getSummaryMarkdown={() => getExportSummaryMarkdown(
+              summaryRef.current ? { getMarkdown: summaryRef.current.getMarkdownForExport } : null,
+              aiSummary,
+            )}
+          />
         </div>
       </div>
 
