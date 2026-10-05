@@ -58,11 +58,17 @@ Interfaces: `buildMeetingDocument({ title, createdAt, summaryMarkdown, transcrip
 
 ## Implementation validation
 
-Tasks 1 and 2 passed separate reviews after correcting the legacy template read limit, saved-editor export state, and empty formatted content checks. The final frontend suite passes 100 tests with 370 assertions. TypeScript and the Next.js production build pass, including all 11 static pages. Rust persistence regressions were added but could not run without the native toolchain; native compilation, Windows atomic persistence, and actual save-dialog/write smoke testing remain unverified.
+Tasks 1 and 2 passed separate reviews after correcting the legacy template read limit, saved-editor export state, and empty formatted content checks. The final frontend suite passes 100 tests with 370 assertions. TypeScript and the Next.js production build pass, including all 11 static pages. Rust persistence regressions were initially unexecuted without the native toolchain; the later Windows validation below resolves native compilation and persistence-test verification. Actual save-dialog/write UI smoke testing remains pending.
 
-The final integration review also corrected section formats being omitted from generation instructions. Paragraph, list, and short-text choices now affect the prompt and cache fingerprint while preserving item-format hints. Four focused Rust regressions were added, but remain unexecuted without Cargo. The focused re-review passed with no remaining Important or Critical findings.
+The final integration review also corrected section formats being omitted from generation instructions. Paragraph, list, and short-text choices now affect the prompt and cache fingerprint while preserving item-format hints. Four focused Rust regressions were added and subsequently passed during the Windows validation below. The focused re-review passed with no remaining Important or Critical findings.
 
 Independent sample inspection confirmed a 15-page PDF with complete transcript content and readable first, continued-table, and last pages. DOCX ZIP/XML inspection confirmed headings, table, and complete content. PDF uses local Helvetica and explicitly rejects unsupported characters; DOCX and Markdown preserve Unicode. Formatting limits are documented in `frontend/src/lib/meeting-export/README.md`.
+
+## Windows installation validation — 2026-10-05
+
+Installed Rust/MSVC, CMake, and libclang, then built the CPU release helper and native application. The first native build identified a dialog plugin minor-version mismatch; the Rust dialog dependency and Cargo lockfile now retain the compatible 2.3 release. The release build and NSIS packaging passed. `cargo test -p meetily --release --lib summary::` passed all 121 selected tests, including custom-template create/update/delete, atomic replacement, rejected writes, legacy oversized reads, format instructions, fingerprints, and cache rejection.
+
+Installed the local build as **Meetly Custom** in `%USERPROFILE%\Apps\Meetly Custom`, with desktop and Start menu shortcuts. The local configuration uses `com.evryday.meetly`, disables upstream updater endpoints/artifacts, and preserves the Windows resource mapping for the verified ONNX DLLs/license. Verified installer exit 0, installed files, shortcut target, a responding native window, and startup loading ONNX Runtime 1.22.0 without errors. First-run model setup remains available in the app; recording/transcription and the native export dialog were not manually exercised in this installation check.
 
 
 
