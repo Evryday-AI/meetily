@@ -8,6 +8,7 @@ import { Block } from '@blocknote/core';
 import { useCreateBlockNote } from '@blocknote/react';
 import { BlockNoteView } from '@blocknote/shadcn';
 import { blocksToMarkdownSafely } from '@/lib/blocknote-markdown';
+import { getCurrentEditorMarkdown } from '@/lib/meeting-export/summary';
 import "@blocknote/shadcn/style.css";
 
 // Dynamically import BlockNote Editor to avoid SSR issues
@@ -31,6 +32,7 @@ interface BlockNoteSummaryViewProps {
 export interface BlockNoteSummaryViewRef {
   saveSummary: () => Promise<void>;
   getMarkdown: () => Promise<string>;
+  getMarkdownForExport: () => Promise<string>;
   isDirty: boolean;
 }
 
@@ -65,7 +67,7 @@ function detectSummaryFormat(data: any): { format: SummaryFormat; data: any } {
   return { format: 'legacy', data: null };
 }
 
-export const BlockNoteSummaryView = forwardRef<BlockNoteSummaryViewRef, BlockNoteSummaryViewProps>(({
+const BlockNoteSummaryContent = forwardRef<BlockNoteSummaryViewRef, BlockNoteSummaryViewProps>(({
   summaryData,
   onSave,
   onSummaryChange,
@@ -77,7 +79,10 @@ export const BlockNoteSummaryView = forwardRef<BlockNoteSummaryViewRef, BlockNot
 }, ref) => {
   const { format, data } = detectSummaryFormat(summaryData);
   const [isDirty, setIsDirty] = useState(false);
-  const [currentBlocks, setCurrentBlocks] = useState<Block[]>([]);
+  // The displayed content remains authoritative after saving clears isDirty,
+  // including an intentionally empty document.
+  const [currentBlocks, setCurrentBlocks] = useState<Block[]>(() =>
+    format === 'blocknote' ? data.summary_json as unknown as Block[] : []);
   const [isSaving, setIsSaving] = useState(false);
   const isContentLoaded = useRef(false);
 
@@ -88,16 +93,19 @@ export const BlockNoteSummaryView = forwardRef<BlockNoteSummaryViewRef, BlockNot
 
   // Parse markdown to blocks when format is markdown
   useEffect(() => {
+    let cancelled = false;
+    let loadTimer: ReturnType<typeof setTimeout> | undefined;
     if (format === 'markdown' && data?.markdown && editor) {
       const loadMarkdown = async () => {
         try {
           console.log('📝 Parsing markdown to BlockNote blocks...');
           const blocks = await editor.tryParseMarkdownToBlocks(data.markdown);
+          if (cancelled) return;
           editor.replaceBlocks(editor.document, blocks);
           console.log('✅ Markdown parsed successfully');
 
           // Delay to ensure editor has finished rendering before allowing onChange
-          setTimeout(() => {
+          loadTimer = setTimeout(() => {
             isContentLoaded.current = true;
           }, 100);
         } catch (err) {
@@ -106,17 +114,22 @@ export const BlockNoteSummaryView = forwardRef<BlockNoteSummaryViewRef, BlockNot
       };
       loadMarkdown();
     }
+    return () => {
+      cancelled = true;
+      clearTimeout(loadTimer);
+    };
   }, [format, data?.markdown, editor]);
 
   // Set content loaded flag for blocknote format
   useEffect(() => {
-    if (format === 'blocknote' && data?.summary_json) {
+    if (format === 'blocknote') {
       // Delay to ensure editor has finished rendering
-      setTimeout(() => {
+      const loadTimer = setTimeout(() => {
         isContentLoaded.current = true;
       }, 100);
+      return () => clearTimeout(loadTimer);
     }
-  }, [format, data?.summary_json]);
+  }, [format]);
 
   const handleEditorChange = useCallback((blocks: Block[]) => {
     // Only set dirty flag if content has finished loading
@@ -167,6 +180,13 @@ export const BlockNoteSummaryView = forwardRef<BlockNoteSummaryViewRef, BlockNot
   // Expose methods to parent via ref
   useImperativeHandle(ref, () => ({
     saveSummary: handleSave,
+    getMarkdownForExport: async () => {
+      if (format === 'legacy') return '';
+      const blocks = format === 'markdown'
+        ? editor.document
+        : currentBlocks;
+      return getCurrentEditorMarkdown(editor, blocks, isContentLoaded.current);
+    },
     getMarkdown: async () => {
       try {
         console.log('🔍 getMarkdown called, format:', format);
@@ -273,6 +293,21 @@ export const BlockNoteSummaryView = forwardRef<BlockNoteSummaryViewRef, BlockNot
   }
 
   return null;
+});
+
+BlockNoteSummaryContent.displayName = 'BlockNoteSummaryContent';
+
+export const BlockNoteSummaryView = forwardRef<BlockNoteSummaryViewRef, BlockNoteSummaryViewProps>((props, ref) => {
+  const { format, data } = detectSummaryFormat(props.summaryData);
+  // BlockNote initialContent is read only on mount. Reset both the displayed
+  // editor and its snapshot for a new loaded source, but preserve local edits
+  // when parents recreate equivalent props or update meeting metadata.
+  const contentKey = JSON.stringify([
+    props.meeting?.id,
+    format,
+    format === 'blocknote' ? data.summary_json : format === 'markdown' ? data.markdown : null,
+  ]);
+  return <BlockNoteSummaryContent key={contentKey} {...props} ref={ref} />;
 });
 
 BlockNoteSummaryView.displayName = 'BlockNoteSummaryView';

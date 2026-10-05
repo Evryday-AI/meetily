@@ -826,6 +826,61 @@ mod tests {
     }
 
     #[test]
+    fn template_cache_fingerprint_changes_after_format_only_edits() {
+        let paragraph = test_template("Summary");
+        let mut list = paragraph.clone();
+        list.sections[0].format = "list".to_string();
+        let mut short_text = paragraph.clone();
+        short_text.sections[0].format = "string".to_string();
+
+        // Headings and content are unchanged; the generation instructions
+        // must carry the format into the existing cache fingerprint.
+        assert_eq!(
+            paragraph.to_markdown_structure(),
+            list.to_markdown_structure()
+        );
+        assert_eq!(
+            paragraph.to_markdown_structure(),
+            short_text.to_markdown_structure()
+        );
+        let paragraph_fingerprint = template_cache_fingerprint(&paragraph);
+        let list_fingerprint = template_cache_fingerprint(&list);
+        let string_fingerprint = template_cache_fingerprint(&short_text);
+        assert_ne!(paragraph_fingerprint, list_fingerprint);
+        assert_ne!(paragraph_fingerprint, string_fingerprint);
+        assert_ne!(list_fingerprint, string_fingerprint);
+    }
+
+    #[test]
+    fn format_only_template_edits_reject_cached_english_summary() {
+        let mut template = test_template("Summary");
+        let mut source = sample_cache_source();
+        source.template_fingerprint = template_cache_fingerprint(&template);
+        let raw = build_summary_result_json(
+            "# Reunion\nBonjour",
+            "# Meeting\nHello",
+            source.clone(),
+            Some("fr"),
+            false,
+            false,
+        )
+        .unwrap()
+        .to_string();
+
+        assert!(extract_cached_english_markdown(&raw, &source, Some("de"))
+            .unwrap()
+            .is_some());
+        for format in ["list", "string"] {
+            template.sections[0].format = format.to_string();
+            source.template_fingerprint = template_cache_fingerprint(&template);
+            assert_eq!(
+                extract_cached_english_markdown(&raw, &source, Some("de")).unwrap(),
+                None
+            );
+        }
+    }
+
+    #[test]
     fn test_legacy_english_markdown_field_is_cache_miss() {
         let raw = serde_json::json!({
             "markdown": "translated",

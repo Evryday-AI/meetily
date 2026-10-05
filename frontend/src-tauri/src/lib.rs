@@ -466,6 +466,7 @@ pub fn run() {
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_store::Builder::default().build())
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
         .manage(whisper_engine::parallel_commands::ParallelProcessorState::new())
@@ -751,6 +752,9 @@ pub fn run() {
             summary::commands::api_cancel_summary,
             // Template commands
             summary::template_commands::api_list_templates,
+            summary::template_commands::api_get_template,
+            summary::template_commands::api_save_custom_template,
+            summary::template_commands::api_delete_custom_template,
             summary::template_commands::api_get_template_details,
             summary::template_commands::api_validate_template,
             // Built-in AI commands

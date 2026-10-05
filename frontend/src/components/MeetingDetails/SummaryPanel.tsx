@@ -6,6 +6,8 @@ import { EmptyStateSummary } from '@/components/EmptyStateSummary';
 import { ModelConfig } from '@/components/ModelSettingsModal';
 import { SummaryGeneratorButtonGroup } from './SummaryGeneratorButtonGroup';
 import { SummaryUpdaterButtonGroup } from './SummaryUpdaterButtonGroup';
+import { ExportMenu } from './ExportMenu';
+import { getExportSummaryMarkdown } from '@/lib/meeting-export/summary';
 import Analytics from '@/lib/analytics';
 import { useEffect, useRef, useState, RefObject } from 'react';
 import { toast } from 'sonner';
@@ -21,6 +23,7 @@ import {
   SummaryLanguageStorage,
 } from '@/lib/summary-language-preferences';
 import { hasVisibleSummaryContent } from '@/lib/summary-content';
+import type { TemplateInfo } from '@/lib/summary-templates';
 
 interface SummaryPanelProps {
   meeting: {
@@ -49,9 +52,12 @@ interface SummaryPanelProps {
   summaryError: string | null;
   onRegenerateSummary: () => Promise<void>;
   getSummaryStatusMessage: (status: 'idle' | 'processing' | 'summarizing' | 'regenerating' | 'completed' | 'error') => string;
-  availableTemplates: Array<{ id: string, name: string, description: string }>;
+  availableTemplates: TemplateInfo[];
   selectedTemplate: string;
   onTemplateSelect: (templateId: string, templateName: string) => void;
+  refreshTemplates: () => Promise<void>;
+  templatesError?: string | null;
+  isTemplatesLoading?: boolean;
   isModelConfigLoading?: boolean;
   onOpenModelSettings?: (openFn: () => void) => void;
 }
@@ -82,6 +88,9 @@ export function SummaryPanel({
   availableTemplates,
   selectedTemplate,
   onTemplateSelect,
+  refreshTemplates,
+  templatesError,
+  isTemplatesLoading,
   isModelConfigLoading = false,
   onOpenModelSettings,
 }: SummaryPanelProps) {
@@ -258,6 +267,9 @@ export function SummaryPanel({
               availableTemplates={availableTemplates}
               selectedTemplate={selectedTemplate}
               onTemplateSelect={onTemplateSelect}
+              refreshTemplates={refreshTemplates}
+              templatesError={templatesError}
+              isTemplatesLoading={isTemplatesLoading}
               hasTranscripts={transcripts.length > 0}
               hasSummary={hasSummary}
               isModelConfigLoading={isModelConfigLoading}
@@ -276,6 +288,17 @@ export function SummaryPanel({
               />
             </div>
           )}
+          <ExportMenu
+            key={meeting.id}
+            meeting={{ ...meeting, title: meetingTitle }}
+            hasSummary={hasSummary}
+            hasTranscripts={transcripts.length > 0}
+            disabled={isSummaryLoading}
+            getSummaryMarkdown={() => getExportSummaryMarkdown(
+              summaryRef.current ? { getMarkdown: summaryRef.current.getMarkdownForExport } : null,
+              aiSummary,
+            )}
+          />
         </div>
       </div>
 

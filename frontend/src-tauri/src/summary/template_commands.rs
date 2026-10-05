@@ -14,6 +14,7 @@ pub struct TemplateInfo {
 
     /// Brief description of the template's purpose
     pub description: String,
+    pub is_custom: bool,
 }
 
 /// Detailed template structure for preview/debugging
@@ -50,6 +51,7 @@ pub async fn api_list_templates<R: Runtime>(
     let template_infos: Vec<TemplateInfo> = templates
         .into_iter()
         .map(|(id, name, description)| TemplateInfo {
+            is_custom: templates::is_custom_template(&id),
             id,
             name,
             description,
@@ -59,6 +61,22 @@ pub async fn api_list_templates<R: Runtime>(
     info!("Found {} available templates", template_infos.len());
 
     Ok(template_infos)
+}
+
+#[tauri::command]
+pub async fn api_get_template(template_id: String) -> Result<templates::Template, String> {
+    templates::get_template(&template_id)
+}
+
+#[tauri::command]
+pub async fn api_save_custom_template(template_id: Option<String>, template_json: String) -> Result<TemplateInfo, String> {
+    let (id, template) = templates::save_custom_template(template_id.as_deref(), &template_json)?;
+    Ok(TemplateInfo { id, name: template.name, description: template.description, is_custom: true })
+}
+
+#[tauri::command]
+pub async fn api_delete_custom_template(template_id: String) -> Result<(), String> {
+    templates::delete_custom_template(&template_id)
 }
 
 /// Gets detailed information about a specific template

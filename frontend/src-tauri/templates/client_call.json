@@ -1,0 +1,10 @@
+{
+  "name": "Client Call",
+  "description": "Capture a client's goals, feedback, agreements, and follow-up commitments.",
+  "sections": [
+    { "title": "Client Goals", "instruction": "Summarize the client's stated goals, current situation, and measures of success. Separate explicit requests from assumptions.", "format": "paragraph" },
+    { "title": "Needs and Feedback", "instruction": "List questions, constraints, concerns, and feedback raised by the client. Preserve any stated priorities.", "format": "list" },
+    { "title": "Agreements", "instruction": "List agreed scope, deliverables, timing, and commercial points only when discussed. Identify unresolved proposals as pending.", "format": "list" },
+    { "title": "Follow-up", "instruction": "List commitments with the responsible person and deadline when stated. Include open questions and the next contact or meeting if agreed.", "format": "list" }
+  ]
+}
